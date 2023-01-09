@@ -9,7 +9,7 @@ fn main() {
 
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        "eframe template",
+        "Register App",
         native_options,
         Box::new(|cc| Box::new(register_app::RegisterApp::new(cc))),
     );
