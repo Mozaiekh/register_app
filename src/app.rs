@@ -1,13 +1,13 @@
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
-// #[derive(serde::Deserialize, serde::Serialize)]
-// #[serde(default)] // if we add new fields, give them default values when deserializing old state
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct RegisterApp {
     // Example stuff:
     first_name_input: String,
     last_name_input: String,
     company_input: String,
     contact_input: String,
-    open_entries: Vec<EntryData>,
+    // open_entries: Vec<EntryData>,
 }
 
 pub struct EntryData {
@@ -32,7 +32,7 @@ impl Default for RegisterApp {
             last_name_input: "".to_owned(),
             company_input: "".to_owned(),
             contact_input: "".to_owned(),
-            open_entries: Vec::from_iter(iter),
+            // open_entries: Vec::from_iter(iter),
         }
     }
 }
@@ -45,9 +45,35 @@ impl RegisterApp {
 
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
-        // if let Some(storage) = cc.storage {
-        //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        // }
+        if let Some(storage) = cc.storage {
+            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        }
+
+        let mut fonts = egui::FontDefinitions::default();
+
+        // Install my own font (maybe supporting non-latin characters).
+        // .ttf and .otf files supported.
+        fonts.font_data.insert(
+            "din1451".to_owned(),
+            egui::FontData::from_static(include_bytes!("../alte-din-1451-mittelschrift.regular.ttf")),
+        );
+
+        // Put my font first (highest priority) for proportional text:
+        fonts
+            .families
+            .entry(egui::FontFamily::Proportional)
+            .or_default()
+            .insert(0, "din1451".to_owned());
+
+        // Put my font as last fallback for monospace:
+        fonts
+            .families
+            .entry(egui::FontFamily::Monospace)
+            .or_default()
+            .push("din1451".to_owned());
+
+        // Tell egui to use these fonts:
+        cc.egui_ctx.set_fonts(fonts);
 
         Default::default()
     }
@@ -55,14 +81,14 @@ impl RegisterApp {
 
 impl eframe::App for RegisterApp {
     /// Called by the frame work to save state before shutdown.
-    // fn save(&mut self, storage: &mut dyn eframe::Storage) {
-    //     eframe::set_value(storage, eframe::APP_KEY, self);
-    // }
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(storage, eframe::APP_KEY, self);
+    }
 
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self { first_name_input, last_name_input, company_input, contact_input, open_entries} = self;
+        let Self { first_name_input, last_name_input, company_input, contact_input, /* open_entries */} = self;
 
         // Examples of how to create different panels and windows.
         // Pick whichever suits you.
@@ -80,46 +106,47 @@ impl eframe::App for RegisterApp {
             });
         });
 
-        egui::SidePanel::left("side_panel").show(ctx, |ui| {
-            ui.heading("Check-In");
-
-            ui.horizontal(|ui| {
-                ui.label("Vorname: ");
-                ui.text_edit_singleline(first_name_input);
-            });
-            ui.horizontal(|ui| {
-                ui.label("Nachname: ");
-                ui.text_edit_singleline(last_name_input);
-            });
-            ui.horizontal(|ui| {
-                ui.label("Firma: ");
-                ui.text_edit_singleline(company_input);
-            });
-            ui.horizontal(|ui| {
-                ui.label("Ansprechpartner: ");
-                ui.text_edit_singleline(contact_input);
-            });
-            if ui.button("Check-In").clicked() {
-                first_name_input.clear();
-                last_name_input.clear();
-                company_input.clear();
-                contact_input.clear();
-            }
-        });
-
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
 
-            ui.heading("Check-Out");
-            
-            for i in &self.open_entries {
-                ui.horizontal(|ui| {
-                    ui.label(&i.first_name);
-                    ui.label(&i.last_name);
-                    ui.label(&i.company);
-                    ui.label(&i.contact);
+            ui.horizontal(|ui| {
+                ui.vertical(|ui| {
+                    ui.heading("Check-In");
+                    ui.horizontal(|ui| {
+                        ui.label("Vorname: ");
+                        ui.text_edit_singleline(first_name_input);
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Nachname: ");
+                        ui.text_edit_singleline(last_name_input);
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Firma: ");
+                        ui.text_edit_singleline(company_input);
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Ansprechpartner: ");
+                        ui.text_edit_singleline(contact_input);
+                    });
+                    if ui.button("Check-In").clicked() {
+                        first_name_input.clear();
+                        last_name_input.clear();
+                        company_input.clear();
+                        contact_input.clear();
+                    }
                 });
-            }
+                ui.vertical(|ui| {
+                    ui.heading("Check-Out");
+                    /* for i in &self.open_entries {
+                        ui.horizontal(|ui| {
+                            ui.label(&i.first_name);
+                            ui.label(&i.last_name);
+                            ui.label(&i.company);
+                            ui.label(&i.contact);
+                        });
+                    } */
+                });
+            });
 
             egui::warn_if_debug_build(ui);
         });
