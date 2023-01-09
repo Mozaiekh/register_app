@@ -100,7 +100,10 @@ impl eframe::App for RegisterApp {
                 ui.text_edit_singleline(contact_input);
             });
             if ui.button("Check-In").clicked() {
-
+                first_name_input.clear();
+                last_name_input.clear();
+                company_input.clear();
+                contact_input.clear();
             }
         });
 
@@ -108,7 +111,7 @@ impl eframe::App for RegisterApp {
             // The central panel the region left after adding TopPanel's and SidePanel's
 
             ui.heading("Check-Out");
-
+            
             for i in &self.open_entries {
                 ui.horizontal(|ui| {
                     ui.label(&i.first_name);

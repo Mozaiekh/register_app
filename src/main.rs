@@ -7,10 +7,11 @@ fn main() {
     // Log to stdout (if you run with `RUST_LOG=debug`).
     tracing_subscriber::fmt::init();
 
-    let native_options = eframe::NativeOptions::default();
+    let mut win_options = eframe::NativeOptions::default();
+    win_options.initial_window_size = Some(egui::vec2(800.0, 600.0));
     eframe::run_native(
         "Register App",
-        native_options,
+        win_options,
         Box::new(|cc| Box::new(register_app::RegisterApp::new(cc))),
     );
 }
