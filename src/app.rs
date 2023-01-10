@@ -1,3 +1,9 @@
+use std::error::Error;
+use std::fs::OpenOptions;
+use std::io;
+use std::process;
+use std::rc::Rc;
+
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -21,12 +27,12 @@ pub struct EntryData {
 
 impl Default for RegisterApp {
     fn default() -> Self {
-        let iter = (0..10).map(|i| EntryData {
+        /* let iter = (0..10).map(|i| EntryData {
             first_name: format!("First Name {}", i),
             last_name: format!("Last Name {}", i),
             company: format!("Company {}", i),
             contact: format!("Contact {}", i),
-        });
+        }); */
         Self {
             first_name_input: "".to_owned(),
             last_name_input: "".to_owned(),
@@ -77,6 +83,22 @@ impl RegisterApp {
 
         Default::default()
     }
+
+    fn new_entry(Self { first_name_input, last_name_input, company_input, contact_input }: Self) -> Result<(), Box<dyn Error>> {
+        
+        // let mut wtr = csv::Writer::from_path("data.csv").unwrap();
+
+        let file = OpenOptions::new().write(true).create(true).append(true).open("data.csv").unwrap();
+        let mut wtr = csv::Writer::from_writer(file);
+
+        wtr.write_record(&[first_name_input, last_name_input, company_input, contact_input])?;
+    
+        wtr.flush()?;
+        Ok(())
+    }
+
+
+    
 }
 
 impl eframe::App for RegisterApp {
@@ -129,6 +151,12 @@ impl eframe::App for RegisterApp {
                         ui.text_edit_singleline(contact_input);
                     });
                     if ui.button("Check-In").clicked() {
+
+                        if let Err(e) = RegisterApp::new_entry(Self { first_name_input: first_name_input.to_owned(), last_name_input: last_name_input.to_owned(), company_input: company_input.to_owned(), contact_input: contact_input.to_owned() }) {
+                            eprintln!("error running example: {}", e);
+                            process::exit(1);
+                        }
+
                         first_name_input.clear();
                         last_name_input.clear();
                         company_input.clear();
