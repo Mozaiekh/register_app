@@ -112,12 +112,26 @@ impl eframe::App for RegisterApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let Self { first_name_input, last_name_input, company_input, contact_input, /* open_entries */} = self;
 
+        const INPUT_X: f32 = 200.0;
+        const INPUT_Y: f32 = 20.0;
+        const CHECK_IN_BOX_WIDTH: f32 = 400.0;
+        const CHECK_OUT_BOX_WIDTH: f32 = 400.0;
+
+        let central_frame = egui::containers::Frame {
+            inner_margin: egui::style::Margin { left: 20., right: 20., top: 20., bottom: 20. },
+            outer_margin: egui::style::Margin { left: 0., right: 0., top: 0., bottom: 0. },
+            rounding: egui::Rounding { nw: 0.0, ne: 0.0, sw: 0.0, se: 0.0 },
+            shadow: eframe::epaint::Shadow { extrusion: 0.0, color: egui::Color32::BLACK },
+            fill: egui::Color32::from_rgb(14, 17, 26),
+            stroke: egui::Stroke::new(0.0, egui::Color32::from_rgb(255, 128, 120)),
+        };
+
         // Examples of how to create different panels and windows.
         // Pick whichever suits you.
         // Tip: a good default choice is to just keep the `CentralPanel`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+        /* egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
@@ -126,29 +140,33 @@ impl eframe::App for RegisterApp {
                     }
                 });
             });
-        });
+        }); */
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
+        egui::CentralPanel::default().frame(central_frame).show(ctx, |ui| {
+
 
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
+                    ui.visuals_mut().override_text_color = Some(egui::Color32::from_rgb(255, 128, 120));
+                    ui.style_mut().spacing.item_spacing = egui::vec2(5.0, 5.0);
+                    ui.set_min_width(CHECK_IN_BOX_WIDTH);
+                    ui.set_max_width(CHECK_IN_BOX_WIDTH);
                     ui.heading("Check-In");
                     ui.horizontal(|ui| {
                         ui.label("Vorname: ");
-                        ui.text_edit_singleline(first_name_input);
+                        ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(first_name_input));
                     });
                     ui.horizontal(|ui| {
                         ui.label("Nachname: ");
-                        ui.text_edit_singleline(last_name_input);
+                        ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(last_name_input));
                     });
                     ui.horizontal(|ui| {
                         ui.label("Firma: ");
-                        ui.text_edit_singleline(company_input);
+                        ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(company_input));
                     });
                     ui.horizontal(|ui| {
                         ui.label("Ansprechpartner: ");
-                        ui.text_edit_singleline(contact_input);
+                        ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(contact_input));
                     });
                     if ui.button("Check-In").clicked() {
 
@@ -164,6 +182,8 @@ impl eframe::App for RegisterApp {
                     }
                 });
                 ui.vertical(|ui| {
+                    ui.set_min_width(CHECK_OUT_BOX_WIDTH);
+                    ui.set_max_width(CHECK_OUT_BOX_WIDTH);
                     ui.heading("Check-Out");
                     /* for i in &self.open_entries {
                         ui.horizontal(|ui| {

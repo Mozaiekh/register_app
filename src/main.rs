@@ -8,7 +8,7 @@ fn main() {
     tracing_subscriber::fmt::init();
 
     let mut win_options = eframe::NativeOptions::default();
-    win_options.initial_window_size = Some(egui::vec2(800.0, 600.0));
+    // win_options.initial_window_size = Some(egui::vec2(800.0, 600.0));
     eframe::run_native(
         "Register App",
         win_options,
