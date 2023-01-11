@@ -13,7 +13,7 @@ pub struct RegisterApp {
     last_name_input: String,
     company_input: String,
     contact_input: String,
-    // open_entries: Vec<EntryData>,
+    // entry_list: Vec<EntryData>,
 }
 
 pub struct EntryData {
@@ -38,7 +38,7 @@ impl Default for RegisterApp {
             last_name_input: "".to_owned(),
             company_input: "".to_owned(),
             contact_input: "".to_owned(),
-            // open_entries: Vec::from_iter(iter),
+            // entry_list: Vec::from_iter(iter),
         }
     }
 }
@@ -81,6 +81,8 @@ impl RegisterApp {
         // Tell egui to use these fonts:
         cc.egui_ctx.set_fonts(fonts);
 
+        
+
         Default::default()
     }
 
@@ -97,6 +99,24 @@ impl RegisterApp {
         Ok(())
     }
 
+    // read the csv file and return a vector of EntryData
+    fn read_entries() -> Result<Vec<EntryData>, Box<dyn Error>> {
+        let mut rdr = csv::Reader::from_path("data.csv")?;
+        let mut entries = Vec::new();
+        for result in rdr.records() {
+            let record = result?;
+            let entry = EntryData {
+                first_name: record[0].to_owned(),
+                last_name: record[1].to_owned(),
+                company: record[2].to_owned(),
+                contact: record[3].to_owned(),
+            };
+            entries.push(entry);
+        }
+        tracing::debug!("Read {} entries.", entries.len());
+        Ok(entries)
+    }
+
 
     
 }
@@ -110,12 +130,14 @@ impl eframe::App for RegisterApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self { first_name_input, last_name_input, company_input, contact_input, /* open_entries */} = self;
+        let Self { first_name_input, last_name_input, company_input, contact_input, /* entry_list */} = self;
 
         const INPUT_X: f32 = 200.0;
         const INPUT_Y: f32 = 20.0;
         const CHECK_IN_BOX_WIDTH: f32 = 400.0;
         const CHECK_OUT_BOX_WIDTH: f32 = 400.0;
+
+        let mut entry_list = Self::read_entries().unwrap();
 
         let central_frame = egui::containers::Frame {
             inner_margin: egui::style::Margin { left: 20., right: 20., top: 20., bottom: 20. },
@@ -185,7 +207,11 @@ impl eframe::App for RegisterApp {
                     ui.set_min_width(CHECK_OUT_BOX_WIDTH);
                     ui.set_max_width(CHECK_OUT_BOX_WIDTH);
                     ui.heading("Check-Out");
-                    /* for i in &self.open_entries {
+                    for entry in &entry_list {
+                        ui.button(format!{ "Check-Out: {} {}", entry.first_name, entry.last_name });
+                    }
+
+                    /* for i in &self.entry_list {
                         ui.horizontal(|ui| {
                             ui.label(&i.first_name);
                             ui.label(&i.last_name);
