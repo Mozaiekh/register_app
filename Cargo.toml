@@ -16,6 +16,7 @@ eframe = { version = "0.20.0", default-features = false, features = [
 ] }
 
 csv = "1.1"
+chrono = "0.4"
 
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"] }

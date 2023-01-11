@@ -13,7 +13,7 @@ pub struct RegisterApp {
     last_name_input: String,
     company_input: String,
     contact_input: String,
-    // entry_list: Vec<EntryData>,
+    // entry_list: Option<Vec<EntryData>>,
 }
 
 pub struct EntryData {
@@ -21,18 +21,13 @@ pub struct EntryData {
     last_name: String,
     company: String,
     contact: String,
+    check_in: String,
 }
 
 
 
 impl Default for RegisterApp {
     fn default() -> Self {
-        /* let iter = (0..10).map(|i| EntryData {
-            first_name: format!("First Name {}", i),
-            last_name: format!("Last Name {}", i),
-            company: format!("Company {}", i),
-            contact: format!("Contact {}", i),
-        }); */
         Self {
             first_name_input: "".to_owned(),
             last_name_input: "".to_owned(),
@@ -88,12 +83,14 @@ impl RegisterApp {
 
     fn new_entry(Self { first_name_input, last_name_input, company_input, contact_input }: Self) -> Result<(), Box<dyn Error>> {
         
-        // let mut wtr = csv::Writer::from_path("data.csv").unwrap();
+        // create a variable wich stores the current date and time
+        // let now = chrono::Local::now();
+        let now = format!("{}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
 
         let file = OpenOptions::new().write(true).create(true).append(true).open("data.csv").unwrap();
         let mut wtr = csv::Writer::from_writer(file);
 
-        wtr.write_record(&[first_name_input, last_name_input, company_input, contact_input])?;
+        wtr.write_record(&[first_name_input, last_name_input, company_input, contact_input, now])?;
     
         wtr.flush()?;
         Ok(())
@@ -110,12 +107,15 @@ impl RegisterApp {
                 last_name: record[1].to_owned(),
                 company: record[2].to_owned(),
                 contact: record[3].to_owned(),
+                check_in: record[4].to_owned(),
             };
             entries.push(entry);
         }
         tracing::debug!("Read {} entries.", entries.len());
         Ok(entries)
     }
+
+    // 
 
 
     
@@ -208,7 +208,7 @@ impl eframe::App for RegisterApp {
                     ui.set_max_width(CHECK_OUT_BOX_WIDTH);
                     ui.heading("Check-Out");
                     for entry in &entry_list {
-                        ui.button(format!{ "Check-Out: {} {}", entry.first_name, entry.last_name });
+                        ui.button(format!{ "{} {} {} {}", entry.first_name, entry.last_name, entry.company, entry.check_in });
                     }
 
                     /* for i in &self.entry_list {
