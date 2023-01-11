@@ -221,7 +221,7 @@ impl eframe::App for RegisterApp {
                     if ui.button("Check-In").clicked() {
 
                         if let Err(e) = RegisterApp::new_entry(Self { first_name_input: first_name_input.to_owned(), last_name_input: last_name_input.to_owned(), company_input: company_input.to_owned(), contact_input: contact_input.to_owned() }) {
-                            eprintln!("error running example: {}", e);
+                            eprintln!("error running the check-in: {}", e);
                             process::exit(1);
                         }
 
@@ -237,12 +237,14 @@ impl eframe::App for RegisterApp {
                     ui.heading("Check-Out");
                     let cl_entry_list = entry_list.clone();
                     for (i, entry) in cl_entry_list.iter().enumerate() {
-                        if ui.button(format!{ "{} {} {}", entry.first_name, entry.last_name, entry.company }).clicked() {
-                            entry_list[i].check_out = format!("{}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
-
-                            if let Err(e) = /* RegisterApp:: */check_out(&entry_list) {
-                                eprintln!("error running example: {}", e);
-                                process::exit(1);
+                        if entry.check_out == "" {
+                            if ui.button(format!{ "{} {} {}", entry.first_name, entry.last_name, entry.company }).clicked() {
+                                entry_list[i].check_out = format!("{}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
+    
+                                if let Err(e) = /* RegisterApp:: */check_out(&entry_list) {
+                                    eprintln!("error running the check-out: {}", e);
+                                    process::exit(1);
+                                }
                             }
                         }
                     }
