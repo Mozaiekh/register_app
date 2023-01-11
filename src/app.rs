@@ -16,12 +16,14 @@ pub struct RegisterApp {
     // entry_list: Option<Vec<EntryData>>,
 }
 
+#[derive(Clone)]
 pub struct EntryData {
     first_name: String,
     last_name: String,
     company: String,
     contact: String,
     check_in: String,
+    check_out: String,
 }
 
 
@@ -90,7 +92,7 @@ impl RegisterApp {
         let file = OpenOptions::new().write(true).create(true).append(true).open("data.csv").unwrap();
         let mut wtr = csv::Writer::from_writer(file);
 
-        wtr.write_record(&[first_name_input, last_name_input, company_input, contact_input, now])?;
+        wtr.write_record(&[first_name_input, last_name_input, company_input, contact_input, now, "".to_string()])?;
     
         wtr.flush()?;
         Ok(())
@@ -103,11 +105,15 @@ impl RegisterApp {
         for result in rdr.records() {
             let record = result?;
             let entry = EntryData {
+
+                // HANDLE ERROR IF RECORD IS EMPTY !!!
+
                 first_name: record[0].to_owned(),
                 last_name: record[1].to_owned(),
                 company: record[2].to_owned(),
                 contact: record[3].to_owned(),
                 check_in: record[4].to_owned(),
+                check_out: record[5].to_owned(),
             };
             entries.push(entry);
         }
@@ -115,7 +121,17 @@ impl RegisterApp {
         Ok(entries)
     }
 
-    // 
+    /* fn check_out(entry_list: &Vec<EntryData>) -> Result<(), Box<dyn Error>> {
+        let file = OpenOptions::new().write(true).open("data.csv").unwrap();
+        let mut wtr = csv::Writer::from_writer(file);
+        wtr.write_record(&["Vorname", "Nachname", "Firma", "Ansprechpartner", "Check-In", "Check-Out"])?;
+        for entry in entry_list {
+            wtr.write_record(&[&entry.first_name, &entry.last_name, &entry.company, &entry.contact, &entry.check_in, &entry.check_out])?;
+        }
+
+        wtr.flush()?;
+        Ok(())
+    } */
 
 
     
@@ -147,6 +163,18 @@ impl eframe::App for RegisterApp {
             fill: egui::Color32::from_rgb(14, 17, 26),
             stroke: egui::Stroke::new(0.0, egui::Color32::from_rgb(255, 128, 120)),
         };
+
+        fn check_out(entry_list: &Vec<EntryData>) -> Result<(), Box<dyn Error>> {
+            let file = OpenOptions::new().write(true).open("data.csv").unwrap();
+            let mut wtr = csv::Writer::from_writer(file);
+            wtr.write_record(&["Vorname", "Nachname", "Firma", "Ansprechpartner", "Check-In", "Check-Out"])?;
+            for entry in entry_list {
+                wtr.write_record(&[&entry.first_name, &entry.last_name, &entry.company, &entry.contact, &entry.check_in, &entry.check_out])?;
+            }
+    
+            wtr.flush()?;
+            Ok(())
+        }
 
         // Examples of how to create different panels and windows.
         // Pick whichever suits you.
@@ -207,18 +235,17 @@ impl eframe::App for RegisterApp {
                     ui.set_min_width(CHECK_OUT_BOX_WIDTH);
                     ui.set_max_width(CHECK_OUT_BOX_WIDTH);
                     ui.heading("Check-Out");
-                    for entry in &entry_list {
-                        ui.button(format!{ "{} {} {} {}", entry.first_name, entry.last_name, entry.company, entry.check_in });
-                    }
+                    let cl_entry_list = entry_list.clone();
+                    for (i, entry) in cl_entry_list.iter().enumerate() {
+                        if ui.button(format!{ "{} {} {}", entry.first_name, entry.last_name, entry.company }).clicked() {
+                            entry_list[i].check_out = format!("{}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
 
-                    /* for i in &self.entry_list {
-                        ui.horizontal(|ui| {
-                            ui.label(&i.first_name);
-                            ui.label(&i.last_name);
-                            ui.label(&i.company);
-                            ui.label(&i.contact);
-                        });
-                    } */
+                            if let Err(e) = /* RegisterApp:: */check_out(&entry_list) {
+                                eprintln!("error running example: {}", e);
+                                process::exit(1);
+                            }
+                        }
+                    }
                 });
             });
 
