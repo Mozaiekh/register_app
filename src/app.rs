@@ -1,8 +1,6 @@
 use std::error::Error;
 use std::fs::OpenOptions;
-use std::io;
 use std::process;
-use std::rc::Rc;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -57,8 +55,8 @@ impl RegisterApp {
         // Install my own font (maybe supporting non-latin characters).
         // .ttf and .otf files supported.
         fonts.font_data.insert(
-            "din1451".to_owned(),
-            egui::FontData::from_static(include_bytes!("../alte-din-1451-mittelschrift.regular.ttf")),
+            "MesloLGS".to_owned(),
+            egui::FontData::from_static(include_bytes!("../MesloLGS NF Regular.ttf")),
         );
 
         // Put my font first (highest priority) for proportional text:
@@ -66,14 +64,14 @@ impl RegisterApp {
             .families
             .entry(egui::FontFamily::Proportional)
             .or_default()
-            .insert(0, "din1451".to_owned());
+            .insert(0, "MesloLGS".to_owned());
 
         // Put my font as last fallback for monospace:
         fonts
             .families
             .entry(egui::FontFamily::Monospace)
             .or_default()
-            .push("din1451".to_owned());
+            .push("MesloLGS".to_owned());
 
         // Tell egui to use these fonts:
         cc.egui_ctx.set_fonts(fonts);
@@ -120,21 +118,6 @@ impl RegisterApp {
         tracing::debug!("Read {} entries.", entries.len());
         Ok(entries)
     }
-
-    /* fn check_out(entry_list: &Vec<EntryData>) -> Result<(), Box<dyn Error>> {
-        let file = OpenOptions::new().write(true).open("data.csv").unwrap();
-        let mut wtr = csv::Writer::from_writer(file);
-        wtr.write_record(&["Vorname", "Nachname", "Firma", "Ansprechpartner", "Check-In", "Check-Out"])?;
-        for entry in entry_list {
-            wtr.write_record(&[&entry.first_name, &entry.last_name, &entry.company, &entry.contact, &entry.check_in, &entry.check_out])?;
-        }
-
-        wtr.flush()?;
-        Ok(())
-    } */
-
-
-    
 }
 
 impl eframe::App for RegisterApp {
@@ -149,9 +132,15 @@ impl eframe::App for RegisterApp {
         let Self { first_name_input, last_name_input, company_input, contact_input, /* entry_list */} = self;
 
         const INPUT_X: f32 = 200.0;
-        const INPUT_Y: f32 = 20.0;
-        const CHECK_IN_BOX_WIDTH: f32 = 400.0;
-        const CHECK_OUT_BOX_WIDTH: f32 = 400.0;
+        const INPUT_Y: f32 = 27.0;
+        const CHECK_IN_BUTTON_X: f32 = 100.0;
+        const CHECK_IN_BUTTON_Y: f32 = 30.0;
+        const CHECK_OUT_BUTTON_X: f32 = 100.0;
+        const CHECK_OUT_BUTTON_Y: f32 = 35.0;
+        const CHECK_IN_BOX_WIDTH: f32 = 350.0;
+        const CHECK_OUT_BOX_WIDTH: f32 = 300.0;
+        const ITEM_SPACING_X: f32 = 10.0;
+        const ITEM_SPACING_Y: f32 = 10.0;
 
         let mut entry_list = Self::read_entries().unwrap();
 
@@ -194,51 +183,66 @@ impl eframe::App for RegisterApp {
 
         egui::CentralPanel::default().frame(central_frame).show(ctx, |ui| {
 
-
             ui.horizontal(|ui| {
-                ui.vertical(|ui| {
-                    ui.visuals_mut().override_text_color = Some(egui::Color32::from_rgb(255, 128, 120));
-                    ui.style_mut().spacing.item_spacing = egui::vec2(5.0, 5.0);
-                    ui.set_min_width(CHECK_IN_BOX_WIDTH);
+                ui.visuals_mut().override_text_color = Some(egui::Color32::from_rgb(255, 128, 120));
+                ui.style_mut().spacing.item_spacing = egui::vec2(ITEM_SPACING_X, ITEM_SPACING_Y);
+                // set the font-size to 24 pt
+                ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
+                ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                     ui.set_max_width(CHECK_IN_BOX_WIDTH);
-                    ui.heading("Check-In");
-                    ui.horizontal(|ui| {
-                        ui.label("Vorname: ");
-                        ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(first_name_input));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("Nachname: ");
-                        ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(last_name_input));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("Firma: ");
-                        ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(company_input));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("Ansprechpartner: ");
-                        ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(contact_input));
-                    });
-                    if ui.button("Check-In").clicked() {
+                    ui.set_min_width(CHECK_IN_BOX_WIDTH - 1.0);
+                    ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_rgb(21, 26, 40);
+                    ui.style_mut().visuals.text_cursor_width = 0.5;
+                    ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                        ui.heading("Check-In");
+                        ui.separator();
+                        ui.add_space(20.0);
+                        ui.with_layout(egui::Layout::top_down(egui::Align::RIGHT), |ui| {
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(first_name_input)/* .hint_text("Max") */);
+                                ui.label("Vorname: ");
+                            });
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(last_name_input));
+                                ui.label("Nachname: ");
+                            });
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(company_input));
+                                ui.label("Firma: ");
+                            });
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                ui.add_sized([INPUT_X, INPUT_Y], egui::TextEdit::singleline(contact_input));
+                                ui.label("Ansprechpartner: ");
+                            });
+                        });
 
-                        if let Err(e) = RegisterApp::new_entry(Self { first_name_input: first_name_input.to_owned(), last_name_input: last_name_input.to_owned(), company_input: company_input.to_owned(), contact_input: contact_input.to_owned() }) {
-                            eprintln!("error running the check-in: {}", e);
-                            process::exit(1);
+                        ui.add_space(20.0);
+
+                        if ui.add_sized([CHECK_IN_BUTTON_X, CHECK_IN_BUTTON_Y], egui::Button::new(format!{ "Check-In" })).clicked() {
+
+                            if let Err(e) = RegisterApp::new_entry(Self { first_name_input: first_name_input.to_owned(), last_name_input: last_name_input.to_owned(), company_input: company_input.to_owned(), contact_input: contact_input.to_owned() }) {
+                                eprintln!("error running the check-in: {}", e);
+                                process::exit(1);
+                            }
+
+                            first_name_input.clear();
+                            last_name_input.clear();
+                            company_input.clear();
+                            contact_input.clear();
                         }
-
-                        first_name_input.clear();
-                        last_name_input.clear();
-                        company_input.clear();
-                        contact_input.clear();
-                    }
+                    });
                 });
-                ui.vertical(|ui| {
-                    ui.set_min_width(CHECK_OUT_BOX_WIDTH);
+
+                ui.with_layout(egui::Layout::top_down_justified(egui::Align::Center), |ui| {
+                    ui.set_min_width(CHECK_OUT_BOX_WIDTH - 1.0);
                     ui.set_max_width(CHECK_OUT_BOX_WIDTH);
                     ui.heading("Check-Out");
+                    ui.separator();
+                    ui.add_space(20.0);
                     let cl_entry_list = entry_list.clone();
                     for (i, entry) in cl_entry_list.iter().enumerate() {
                         if entry.check_out == "" {
-                            if ui.button(format!{ "{} {} {}", entry.first_name, entry.last_name, entry.company }).clicked() {
+                            if ui.add_sized([CHECK_OUT_BUTTON_X, CHECK_OUT_BUTTON_Y], egui::Button::new(format!{ "{} {} {}", entry.first_name, entry.last_name, entry.company })).clicked() {
                                 entry_list[i].check_out = format!("{}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
     
                                 if let Err(e) = /* RegisterApp:: */check_out(&entry_list) {
@@ -246,6 +250,14 @@ impl eframe::App for RegisterApp {
                                     process::exit(1);
                                 }
                             }
+                            /* if ui.button(format!{ "{} {} {}", entry.first_name, entry.last_name, entry.company }).clicked() {
+                                entry_list[i].check_out = format!("{}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
+    
+                                if let Err(e) = /* RegisterApp:: */check_out(&entry_list) {
+                                    eprintln!("error running the check-out: {}", e);
+                                    process::exit(1);
+                                }
+                            } */
                         }
                     }
                 });
